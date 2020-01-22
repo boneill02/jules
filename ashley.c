@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 	/* Start conversing */
 	printf("ASHLEY:\tHi, is something troubling you?\nYOU:\t");
 	while (running) {
+		memset(input, 0, 512);
 		fgets(input, 512, stdin);
 		result = parse_sentence(input);
 		if (result->rank < 2) {
