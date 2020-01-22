@@ -11,6 +11,15 @@ char *rankwords[4] = {
 	"terrible", "horrible", "sad", "depressed"
 };
 
+char *yeswords[7] = {
+	"yes", "yeah", "yup", "yep", "mhm", "yea",
+	"yuh"
+};
+
+char *nowords[6] = {
+	"no", "nope", "negative", "nah", "na", "nein"
+};
+
 SentenceResult *parse_sentence(char *sentence, size_t size)
 {
 	memset(sentence, 0, size);
@@ -80,7 +89,7 @@ SentenceResult *parse_sentence(char *sentence, size_t size)
 int main(int argc, char *argv[])
 {
 	char input[512];
-	int running = 1;
+	int running = 1, i;
 	SentenceResult *result;
 
 	/* Welcome message */
@@ -94,10 +103,24 @@ int main(int argc, char *argv[])
 	printf("ASHLEY:\tHi, is something troubling you?\nYOU:\t");
 	while (running) {
 		result = parse_sentence(input, 512);
-		if (!strcmp(input, "yeah")) {
-			printf("ASHLEY:\tWhat is it?\nYOU:\t");
-			result = parse_sentence(input, 512);
+
+		/* is it just a yes word */
+		for (i = 0; i < 7; i++) {
+			if (!strcmp(input, yeswords[i])) {
+				printf("ASHLEY:\tWhat is it?\nYOU:\t");
+				result = parse_sentence(input, 512);
+			}
 		}
+
+		/* is it just a no word */
+		for (i = 0; i < 6; i++) {
+			if (!strcmp(input, nowords[i])) {
+				printf("ASHLEY:\tOK, bye!\n");
+				running = 0;
+				goto end;
+			}
+		}
+
 		if (result->rank < 2) {
 			/* ask one deeper question */
 			printf("ASHLEY:\tWhy do you think that is?\nYOU:\t");
@@ -121,5 +144,7 @@ int main(int argc, char *argv[])
 		/* back to the surface - ask a question */
 		printf("ASHLEY:\tOK. Is there anything else bothering you?\nYOU:\t");
 	}
+
+end:
 	return 0;
 }
