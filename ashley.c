@@ -11,8 +11,11 @@ char *rankwords[4] = {
 	"terrible", "horrible", "sad", "depressed"
 };
 
-SentenceResult *parse_sentence(char *sentence)
+SentenceResult *parse_sentence(char *sentence, size_t size)
 {
+	memset(sentence, 0, size);
+	fgets(sentence, size, stdin);
+
 	SentenceResult *result = malloc(sizeof(SentenceResult));
 	result->rank = 0;
 	int parsing = 1, i, catching_keyphrase = 0, keyphrase_index = 0, str_index = 0;
@@ -22,7 +25,7 @@ SentenceResult *parse_sentence(char *sentence)
 	while (parsing) {
 		/* get new word */
 		if (started == 0) {
-			word = strtok(sentence, " ");
+			word = strtok(sentence, " \n\0\t");
 			if (word == NULL || strlen(word) == 0) {
 				parsing = 0;
 				continue;
@@ -63,7 +66,7 @@ SentenceResult *parse_sentence(char *sentence)
 		for (i = 0; i < 4; i++)
 			if (!strncmp(word, rankwords[i], strlen(rankwords[i])))
 				result->rank++;
-		
+
 		/* catch key phrases */
 		if (!strcmp(word, "well") || !strcmp(word, "because")) {
 			catching_keyphrase = 1;
@@ -90,31 +93,33 @@ int main(int argc, char *argv[])
 	/* Start conversing */
 	printf("ASHLEY:\tHi, is something troubling you?\nYOU:\t");
 	while (running) {
-		memset(input, 0, 512);
-		fgets(input, 512, stdin);
-		result = parse_sentence(input);
+		result = parse_sentence(input, 512);
+		if (!strcmp(input, "yeah")) {
+			printf("ASHLEY:\tWhat is it?\nYOU:\t");
+			result = parse_sentence(input, 512);
+		}
 		if (result->rank < 2) {
 			/* ask one deeper question */
 			printf("ASHLEY:\tWhy do you think that is?\nYOU:\t");
-			fgets(input, 512, stdin);
+			result = parse_sentence(input, 512);
 		} else if (result->rank < 5) {
 			/* ask two or three deeper questions */
-			printf("ASHLEY:\tOh, is that important to you?\nYOU:\t");
-			fgets(input, 512, stdin);
 			printf("ASHLEY:\tWhat could you do to fix this?\nYOU:\t");
-			fgets(input, 512, stdin);
+			result = parse_sentence(input, 512);
+			printf("ASHLEY:\tWill that work?\nYOU:\t");
+			result = parse_sentence(input, 512);
 		} else {
 			/* damn this is really bothering them, ask away ash */
 			printf("ASHLEY:\tOh, is that important to you?\nYOU:\t");
-			fgets(input, 512, stdin);
+			result = parse_sentence(input, 512);
 			printf("ASHLEY:\tWhy do you think that is?\nYOU:\t");
-			fgets(input, 512, stdin);
-			printf("ASHLEY:\tWhat could you do to fix this?\nYOU:\t");
-			fgets(input, 512, stdin);
+			result = parse_sentence(input, 512);
+			printf("ASHLEY:\tWhat could you do to repair this?\nYOU:\t");
+			result = parse_sentence(input, 512);
 		}
 
 		/* back to the surface - ask a question */
-		printf("ASHLEY:\tIs there anything else bothering you?\nYOU:\t");
+		printf("ASHLEY:\tOK. Is there anything else bothering you?\nYOU:\t");
 	}
 	return 0;
 }
