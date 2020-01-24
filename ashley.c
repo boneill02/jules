@@ -1,150 +1,160 @@
+#include <regex.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
-	int rank;
-	char *key_phrase;
-} SentenceResult;
+typedef struct default_rule {
+	char *result;
+	struct default_rule *next;
+} DefaultRule;
 
-char *rankwords[4] = {
-	"terrible", "horrible", "sad", "depressed"
-};
+typedef struct pattern_rule {
+	char *pattern;
+	char *result;
+	struct pattern_rule *next;
+} PatternRule;
 
-char *yeswords[7] = {
-	"yes", "yeah", "yup", "yep", "mhm", "yea",
-	"yuh"
-};
+DefaultRule *default_rule_list;
+PatternRule *pattern_rule_list;
 
-char *nowords[6] = {
-	"no", "nope", "negative", "nah", "na", "nein"
-};
+enum ParseState {
+	PARSE_PATTERN,
+	PARSE_DEFAULT,
+} ;
 
-SentenceResult *parse_sentence(char *sentence, size_t size)
+void load_script(char *path)
 {
-	memset(sentence, 0, size);
-	fgets(sentence, size, stdin);
+	FILE *f = fopen(path, "r");
+	char pattern[256], result[256];
+	int c, i = 0, line_num = 1, line_state = 0, array_index = 0;
+	bool ignore = false;
+	enum ParseState parse_state = PARSE_PATTERN;
 
-	SentenceResult *result = malloc(sizeof(SentenceResult));
-	result->rank = 0;
-	int parsing = 1, i, catching_keyphrase = 0, keyphrase_index = 0, str_index = 0;
-	int started = 0;
-	char *cache[8], *word;
+	DefaultRule *current_default_rule = malloc(sizeof(DefaultRule));
+	default_rule_list = current_default_rule;
 
-	while (parsing) {
-		/* get new word */
-		if (started == 0) {
-			word = strtok(sentence, " \n\0\t");
-			if (word == NULL || strlen(word) == 0) {
-				parsing = 0;
-				continue;
+	PatternRule *current_pattern_rule = malloc(sizeof(PatternRule));
+	pattern_rule_list = current_pattern_rule;
+
+	while((c = fgetc(f)) != EOF) {
+		if (ignore == true) {
+			if (parse_state == PARSE_PATTERN) {
+				if (line_state == 0)
+					pattern[array_index] = c;
+				else
+					result[array_index] = c;
+			} else {
+				pattern[array_index] = c;
 			}
-			str_index += strlen(word) + 1;
-			started = 1;
-		} else {
-			word = strtok(sentence + str_index, " ");
-			if (word == NULL || strlen(word) == 0) {
-				parsing = 0;
-				continue;
-			}
-			str_index += strlen(word) + 1;
+			array_index++;
+			ignore = false;
+			continue;
 		}
 
-		if (catching_keyphrase) {
-			strcpy(result->key_phrase + keyphrase_index, " ");
-			keyphrase_index++;
-			strcpy(result->key_phrase + keyphrase_index, word);
-			keyphrase_index += strlen(word);
-		}
+		switch (c) {
+			case '\n':
+				result[array_index] = '\0';
+				if (parse_state == PARSE_PATTERN && strcmp(pattern, "DEFAULT")) {
+					current_pattern_rule->pattern = malloc(strlen(pattern) + 1);
+					strcpy(current_pattern_rule->pattern, pattern);
+					current_pattern_rule->pattern[strlen(pattern)] = '\0';
 
-		/* format string */
-		for (i = 0; i < strlen(word); i++)
-			word[i] = tolower(word[i]);
+					current_pattern_rule->result = malloc(strlen(result) + 1);
+					strcpy(current_pattern_rule->result, result);
+					current_pattern_rule->result[strlen(result)] = '\0';
 
-		if (ispunct(word[strlen(word) - 1]))
-			word[strlen(word) - 1] = '\0';
+					current_pattern_rule->next = malloc(sizeof(PatternRule));
+					current_pattern_rule = current_pattern_rule->next;
+				} else if (parse_state == PARSE_PATTERN && !strcmp(pattern, "DEFAULT")) {
+					parse_state = PARSE_DEFAULT;
+					current_pattern_rule->next = NULL;
+					current_pattern_rule->pattern = NULL;
+					current_pattern_rule->result = NULL;
+				} else if (parse_state == PARSE_DEFAULT) {
+					current_default_rule->result = malloc(strlen(result) + 1);
+					strcpy(current_default_rule->result, result);
+					current_default_rule->result[strlen(result)] = '\0';
 
-		/* shift cache */
-		for (i = 6; i >= 0; i--) 
-			cache[i + 1] = cache[i];
-
-		/* add new word to cache */
-		cache[0] = word;
-
-		/* this should be done for any emotional adjectives like this */
-		for (i = 0; i < 4; i++)
-			if (!strncmp(word, rankwords[i], strlen(rankwords[i])))
-				result->rank++;
-
-		/* catch key phrases */
-		if (!strcmp(word, "well") || !strcmp(word, "because")) {
-			catching_keyphrase = 1;
-			result->key_phrase = malloc(512);
+					current_default_rule->next = malloc(sizeof(DefaultRule));
+					current_default_rule = current_default_rule->next;
+				} else {
+					fprintf(stderr, "syntax error at line %d\n", line_num);
+				}
+				line_num++;
+				line_state = 0;
+				array_index = 0;
+				break;
+			case '\\':
+				ignore = true;
+				break;
+			case ':':
+				if (parse_state == PARSE_PATTERN) {
+					pattern[array_index] = '\0';
+					line_state = 1;
+					array_index = 0;
+				}
+				break;
+			default:
+				if (parse_state == PARSE_PATTERN) {
+					if (line_state == 0) {
+						pattern[array_index] = c;
+						array_index++;
+					} else {
+						result[array_index] = c;
+						array_index++;
+					}
+				} else {
+					result[array_index] = c;
+				}
 		}
 	}
 
-	return result;
+	current_default_rule->next = NULL;
+	current_pattern_rule->next = NULL;
+}
+
+void do_ashley(void)
+{
+	PatternRule *patrule = pattern_rule_list;
+	DefaultRule *defrule = default_rule_list;
+
+	printf("PATTERN RULES:\n");
+	while (patrule->next != NULL) {
+		printf("\tPATTERN: %s\n", patrule->pattern);
+		printf("\tRESULT: %s\n", patrule->result);
+		patrule = patrule->next;
+	}
+
+	printf("DEFAULT RULES:\n");
+	while (defrule->next != NULL) {
+		printf("\t%s\n", defrule->result);
+		defrule = defrule->next;
+	}
 }
 
 int main(int argc, char *argv[])
 {
-	char input[512];
-	int running = 1, i;
-	SentenceResult *result;
+	//char *basedir = "/usr/share/ashley/";
+	char *basedir = "./";
+	char *script = "DOCTOR.ash";
+	char *fullpath;
 
-	/* Welcome message */
-	printf("Welcome to ASHLEY.\nAshley is a mock psychotherapist.\n\n");
-	printf("Copyright (C) 2020 Ben O'Neill <ben@benoneill.xyz>. Source code is "
-			"licensed under the GNU GPL v3 or later.\n");
-	printf("This program is based off the idea of Joseph Weizenbaum's program "
-			"ELIZA written in 1966.\n\n");
-
-	/* Start conversing */
-	printf("ASHLEY:\tHi, is something troubling you?\nYOU:\t");
-	while (running) {
-		result = parse_sentence(input, 512);
-
-		/* is it just a yes word */
-		for (i = 0; i < 7; i++) {
-			if (!strcmp(input, yeswords[i])) {
-				printf("ASHLEY:\tWhat is it?\nYOU:\t");
-				result = parse_sentence(input, 512);
-			}
-		}
-
-		/* is it just a no word */
-		for (i = 0; i < 6; i++) {
-			if (!strcmp(input, nowords[i])) {
-				printf("ASHLEY:\tOK, bye!\n");
-				running = 0;
-				goto end;
-			}
-		}
-
-		if (result->rank < 2) {
-			/* ask one deeper question */
-			printf("ASHLEY:\tWhy do you think that is?\nYOU:\t");
-			result = parse_sentence(input, 512);
-		} else if (result->rank < 5) {
-			/* ask two or three deeper questions */
-			printf("ASHLEY:\tWhat could you do to fix this?\nYOU:\t");
-			result = parse_sentence(input, 512);
-			printf("ASHLEY:\tWill that work?\nYOU:\t");
-			result = parse_sentence(input, 512);
-		} else {
-			/* damn this is really bothering them, ask away ash */
-			printf("ASHLEY:\tOh, is that important to you?\nYOU:\t");
-			result = parse_sentence(input, 512);
-			printf("ASHLEY:\tWhy do you think that is?\nYOU:\t");
-			result = parse_sentence(input, 512);
-			printf("ASHLEY:\tWhat could you do to repair this?\nYOU:\t");
-			result = parse_sentence(input, 512);
-		}
-
-		/* back to the surface - ask a question */
-		printf("ASHLEY:\tOK. Is there anything else bothering you?\nYOU:\t");
+	argc--, argv++;
+	for (; argc > 0; argv++, argc--) {
+		if (!strcmp(*argv, "-f"))
+			script = ++(*argv);
+		else if (!strcmp(*argv, "-d"))
+			basedir = ++(*argv);
+		else
+			printf("usage: %s [-d scriptdir] [-f script]\n", argv[0]);
 	}
 
-end:
+	fullpath = malloc(strlen(basedir) + strlen(script) + 1);
+	strcpy(fullpath, basedir);
+	strcpy(fullpath + strlen(basedir), script);
+
+	load_script(fullpath);
+	do_ashley();
 	return 0;
 }
