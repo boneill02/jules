@@ -1,8 +1,6 @@
 # jules texting script
-
-META: # metadata section
 NAME:JULES
-INITIAL_STR:hi!
+START:hi!
 
 PATTERN: # pattern section
 ^(hi|hello|sup|hey).*$:heyyy

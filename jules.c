@@ -19,8 +19,7 @@ DefaultRule *default_rule_list;
 PatternRule *pattern_rule_list;
 int num_default_rules = 0, num_pattern_rules = 0;
 
-char initial_str[256];
-char user_name[8], script_name[8];
+char initial_str[256], user_name[8] = "YOU", script_name[8];
 
 enum ParseState {
 	PARSE_META,
@@ -70,10 +69,12 @@ void load_script(char *path)
 
 	while((c = fgetc(f)) != EOF) {
 		if (comment == true) {
-			if (c == '\n')
+			if (c == '\n') {
+				comment = false;
 				goto handle_newline;
-			else
+			} else {
 				continue;
+			}
 		}
 		if (ignore == true) {
 			if (parse_state == PARSE_PATTERN) {
@@ -91,18 +92,21 @@ void load_script(char *path)
 
 		switch (c) {
 			case '#':
+				if (array_index == 0)
+					pattern[0] = '\0';
 				comment = true;
 				break;
 			case '\n':
 handle_newline:
-				if (array_index == 0)
-					continue;
 				result[array_index] = '\0';
-				if (parse_state == PARSE_META && strcmp(pattern, "PATTERN") && strcmp(pattern, "META")) {
-					if (!strcmp(pattern, "INITIAL_STR")) {
+				if (parse_state == PARSE_META && strcmp(pattern, "PATTERN") && strlen(pattern) != 0) {
+					if (!strcmp(pattern, "START")) {
 						strcpy(initial_str, result);
 					} else if (!strcmp(pattern, "NAME")) {
 						strcpy(script_name, result);
+					} else {
+						fprintf(stderr, "syntax error at line %d\n", line_num);
+						exit(1);
 					}
 				} else if (parse_state == PARSE_META && !strcmp(pattern, "PATTERN")) {
 					parse_state = PARSE_PATTERN;
@@ -130,34 +134,31 @@ handle_newline:
 
 					current_default_rule->next = malloc(sizeof(DefaultRule));
 					current_default_rule = current_default_rule->next;
+				} else if (strlen(pattern) == 0) {
+					/* do nothing */
 				} else {
 					fprintf(stderr, "syntax error at line %d\n", line_num);
 				}
 				line_num++;
 				line_state = 0;
+				pattern[0] = '\0';
+				result[0] = '\0';
 				array_index = 0;
 				break;
 			case '\\':
 				ignore = true;
 				break;
 			case ':':
-				if (parse_state == PARSE_PATTERN) {
-					pattern[array_index] = '\0';
-					line_state = 1;
-					array_index = 0;
-				}
+				pattern[array_index] = '\0';
+				line_state = 1;
+				array_index = 0;
 				break;
 			default:
-				if (parse_state == PARSE_PATTERN) {
-					if (line_state == 0) {
-						pattern[array_index] = c;
-						array_index++;
-					} else {
-						result[array_index] = c;
-						array_index++;
-					}
-				} else {
+				if (line_state == 0) {
 					pattern[array_index] = c;
+					array_index++;
+				} else {
+					result[array_index] = c;
 					array_index++;
 				}
 		}
