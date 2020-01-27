@@ -161,8 +161,10 @@ handle_newline:
 				}
 				line_num++;
 				line_state = 0;
-				pattern[0] = '\0';
-				result[0] = '\0';
+				for (int i = 0; i < 256; i++)
+					pattern[i] = '\0';
+				for (int i = 0; i < 256; i++)
+					result[i] = '\0';
 				array_index = 0;
 				break;
 			case '\\':
@@ -197,7 +199,7 @@ void parse_response(char *response)
 	while (pattern_rule->pattern != NULL) {
 		regex_ret = regcomp(&regex, pattern_rule->pattern, REG_EXTENDED);
 		if (regex_ret) {
-			fprintf(stderr, "Could not compile regex.\n");
+			fprintf(stderr, "Could not compile regex: %s\n", pattern_rule->pattern);
 			exit(1);
 		}
 
