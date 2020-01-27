@@ -15,4 +15,4 @@ PATTERN: # pattern section
 ^(i'm|i am)*.*(pretty|really)|very)*(fine|not good)|(horrible|terrible)|(bad|sad)|(depressed|worried)).*$:wait why?
 ^(wyd|what (are|r)* (you|u) up (to|2)).*$:nmu
 DEFAULT:
-boomer moment
+what? i don't understand, sorry lol
