@@ -1,3 +1,10 @@
+# jules texting script
+
+META: # metadata section
+NAME:JULES
+INITIAL_STR:hi!
+
+PATTERN: # pattern section
 ^(hi|hello|sup|hey).*$:heyyy
 ^(how (are|r) (you|u)|hru).*$:ok hbu?
 ^(i'm|i am)*.*(ight|ok|alright).*$:something wrong?

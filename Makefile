@@ -1,25 +1,16 @@
-# dwm - dynamic window manager
-# See LICENSE file for copyright and license details.
-
 include config.mk
 
-SRC = ashley.c
+SRC = jules.c
 OBJ = ${SRC:.c=.o}
 
-all: options ashley
-
-options:
-	@echo dwm build options:
-	@echo "CFLAGS   = ${CFLAGS}"
-	@echo "LDFLAGS  = ${LDFLAGS}"
-	@echo "CC       = ${CC}"
+all: jules
 
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
 ${OBJ}: config.mk
 
-ashley: ${OBJ}
+jules: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:

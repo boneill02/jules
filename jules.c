@@ -17,23 +17,50 @@ typedef struct pattern_rule {
 
 DefaultRule *default_rule_list;
 PatternRule *pattern_rule_list;
+int num_default_rules = 0, num_pattern_rules = 0;
+
+char initial_str[256];
+char user_name[8], script_name[8];
 
 enum ParseState {
+	PARSE_META,
 	PARSE_PATTERN,
 	PARSE_DEFAULT,
 };
 
-void do_ashley(void);
+void do_jules(void);
 void load_script(char *path);
 void parse_response(char *response);
+
+void do_jules(void)
+{
+	PatternRule *patrule = pattern_rule_list;
+	DefaultRule *defrule = default_rule_list;
+	int c, index = 0;
+	char response[512];
+
+	printf("%s:\t%s\n", script_name, initial_str);
+	printf("%s:\t", user_name);
+	while ((c = fgetc(stdin)) != EOF) {
+		if (c == '\n') {
+			parse_response(response);
+			index = 0;
+			memset(response, 0, 512);
+			printf("%s:\t", user_name);
+		} else {
+			response[index] = c;
+			index++;
+		}
+	}
+}
 
 void load_script(char *path)
 {
 	FILE *f = fopen(path, "r");
 	char pattern[256], result[256];
 	int c, i = 0, line_num = 1, line_state = 0, array_index = 0;
-	bool ignore = false;
-	enum ParseState parse_state = PARSE_PATTERN;
+	bool ignore = false, comment = false;
+	enum ParseState parse_state = PARSE_META;
 
 	DefaultRule *current_default_rule = malloc(sizeof(DefaultRule));
 	default_rule_list = current_default_rule;
@@ -42,6 +69,12 @@ void load_script(char *path)
 	pattern_rule_list = current_pattern_rule;
 
 	while((c = fgetc(f)) != EOF) {
+		if (comment == true) {
+			if (c == '\n')
+				goto handle_newline;
+			else
+				continue;
+		}
 		if (ignore == true) {
 			if (parse_state == PARSE_PATTERN) {
 				if (line_state == 0)
@@ -57,9 +90,23 @@ void load_script(char *path)
 		}
 
 		switch (c) {
+			case '#':
+				comment = true;
+				break;
 			case '\n':
+handle_newline:
+				if (array_index == 0)
+					continue;
 				result[array_index] = '\0';
-				if (parse_state == PARSE_PATTERN && strcmp(pattern, "DEFAULT")) {
+				if (parse_state == PARSE_META && strcmp(pattern, "PATTERN") && strcmp(pattern, "META")) {
+					if (!strcmp(pattern, "INITIAL_STR")) {
+						strcpy(initial_str, result);
+					} else if (!strcmp(pattern, "NAME")) {
+						strcpy(script_name, result);
+					}
+				} else if (parse_state == PARSE_META && !strcmp(pattern, "PATTERN")) {
+					parse_state = PARSE_PATTERN;
+				} else if (parse_state == PARSE_PATTERN && strcmp(pattern, "DEFAULT")) {
 					current_pattern_rule->pattern = malloc(strlen(pattern) + 1);
 					strcpy(current_pattern_rule->pattern, pattern);
 					current_pattern_rule->pattern[strlen(pattern)] = '\0';
@@ -120,27 +167,6 @@ void load_script(char *path)
 	current_pattern_rule->next = NULL;
 }
 
-void do_ashley(void)
-{
-	PatternRule *patrule = pattern_rule_list;
-	DefaultRule *defrule = default_rule_list;
-	int c, index = 0;
-	char response[512];
-
-	printf("YOU:\t");
-	while ((c = fgetc(stdin)) != EOF) {
-		if (c == '\n') {
-			parse_response(response);
-			index = 0;
-			memset(response, 0, 512);
-			printf("YOU:\t");
-		} else {
-			response[index] = c;
-			index++;
-		}
-	}
-}
-
 void parse_response(char *response)
 {
 	regex_t regex;
@@ -156,7 +182,7 @@ void parse_response(char *response)
 
 		regex_ret = regexec(&regex, response, 0, NULL, 0);
 		if (!regex_ret) {
-			printf("ASHLEY:\t%s\n", pattern_rule->result);
+			printf("%s:\t%s\n", script_name, pattern_rule->result);
 			regfree(&regex);
 			return;
 		}
@@ -165,25 +191,21 @@ void parse_response(char *response)
 		pattern_rule = pattern_rule->next;
 	}
 
-	printf("ASHLEY:\t%s\n", default_rule_list->result);
+	printf("%s:\t%s\n", script_name, default_rule_list->result);
 }
 
 int main(int argc, char *argv[])
 {
-	//char *basedir = "/usr/share/ashley/";
 	char *basedir = "./";
-	char *script = "DOCTOR.ash";
+	char *script = "scripts/texting.jul";
 	char *fullpath;
-	char *argv0 = *argv;
 
-	argc--, argv++;
-	for (; argc > 0; argv++, argc--) {
-		if (!strcmp(*argv, "-f"))
-			script = ++(*argv);
-		else if (!strcmp(*argv, "-d"))
-			basedir = ++(*argv);
-		else
-			printf("usage: %s [-d scriptdir] [-f script]\n", argv0);
+	if (argc == 2) {
+		script = argv[1];
+	} else if (argc == 1) {
+		/* do nothing */
+	} else {
+		printf("usage: %s [script]\n", argv[0]);
 	}
 
 	fullpath = malloc(strlen(basedir) + strlen(script) + 1);
@@ -191,6 +213,6 @@ int main(int argc, char *argv[])
 	strcpy(fullpath + strlen(basedir), script);
 
 	load_script(fullpath);
-	do_ashley();
+	do_jules();
 	return 0;
 }
