@@ -82,7 +82,6 @@ void load_script(char *path)
 					current_default_rule->result[strlen(pattern)] = '\0';
 
 					current_default_rule->next = malloc(sizeof(DefaultRule));
-					printf("%s\n", current_default_rule->result);
 					current_default_rule = current_default_rule->next;
 				} else {
 					fprintf(stderr, "syntax error at line %d\n", line_num);
@@ -128,11 +127,13 @@ void do_ashley(void)
 	int c, index = 0;
 	char response[512];
 
+	printf("YOU:\t");
 	while ((c = fgetc(stdin)) != EOF) {
 		if (c == '\n') {
 			parse_response(response);
 			index = 0;
 			memset(response, 0, 512);
+			printf("YOU:\t");
 		} else {
 			response[index] = c;
 			index++;
