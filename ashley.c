@@ -21,7 +21,11 @@ PatternRule *pattern_rule_list;
 enum ParseState {
 	PARSE_PATTERN,
 	PARSE_DEFAULT,
-} ;
+};
+
+void do_ashley(void);
+void load_script(char *path);
+void parse_response(char *response);
 
 void load_script(char *path)
 {
@@ -72,11 +76,13 @@ void load_script(char *path)
 					current_pattern_rule->pattern = NULL;
 					current_pattern_rule->result = NULL;
 				} else if (parse_state == PARSE_DEFAULT) {
-					current_default_rule->result = malloc(strlen(result) + 1);
-					strcpy(current_default_rule->result, result);
-					current_default_rule->result[strlen(result)] = '\0';
+					pattern[array_index] = '\0';
+					current_default_rule->result = malloc(strlen(pattern) + 1);
+					strcpy(current_default_rule->result, pattern);
+					current_default_rule->result[strlen(pattern)] = '\0';
 
 					current_default_rule->next = malloc(sizeof(DefaultRule));
+					printf("%s\n", current_default_rule->result);
 					current_default_rule = current_default_rule->next;
 				} else {
 					fprintf(stderr, "syntax error at line %d\n", line_num);
@@ -105,7 +111,8 @@ void load_script(char *path)
 						array_index++;
 					}
 				} else {
-					result[array_index] = c;
+					pattern[array_index] = c;
+					array_index++;
 				}
 		}
 	}
@@ -118,19 +125,46 @@ void do_ashley(void)
 {
 	PatternRule *patrule = pattern_rule_list;
 	DefaultRule *defrule = default_rule_list;
+	int c, index = 0;
+	char response[512];
 
-	printf("PATTERN RULES:\n");
-	while (patrule->next != NULL) {
-		printf("\tPATTERN: %s\n", patrule->pattern);
-		printf("\tRESULT: %s\n", patrule->result);
-		patrule = patrule->next;
+	while ((c = fgetc(stdin)) != EOF) {
+		if (c == '\n') {
+			parse_response(response);
+			index = 0;
+			memset(response, 0, 512);
+		} else {
+			response[index] = c;
+			index++;
+		}
+	}
+}
+
+void parse_response(char *response)
+{
+	regex_t regex;
+	int regex_ret;
+	PatternRule *pattern_rule = pattern_rule_list;
+
+	while (pattern_rule->pattern != NULL) {
+		regex_ret = regcomp(&regex, pattern_rule->pattern, REG_EXTENDED);
+		if (regex_ret) {
+			fprintf(stderr, "Could not compile regex.\n");
+			exit(1);
+		}
+
+		regex_ret = regexec(&regex, response, 0, NULL, 0);
+		if (!regex_ret) {
+			printf("ASHLEY:\t%s\n", pattern_rule->result);
+			regfree(&regex);
+			return;
+		}
+
+		regfree(&regex);
+		pattern_rule = pattern_rule->next;
 	}
 
-	printf("DEFAULT RULES:\n");
-	while (defrule->next != NULL) {
-		printf("\t%s\n", defrule->result);
-		defrule = defrule->next;
-	}
+	printf("ASHLEY:\t%s\n", default_rule_list->result);
 }
 
 int main(int argc, char *argv[])
@@ -139,6 +173,7 @@ int main(int argc, char *argv[])
 	char *basedir = "./";
 	char *script = "DOCTOR.ash";
 	char *fullpath;
+	char *argv0 = *argv;
 
 	argc--, argv++;
 	for (; argc > 0; argv++, argc--) {
@@ -147,7 +182,7 @@ int main(int argc, char *argv[])
 		else if (!strcmp(*argv, "-d"))
 			basedir = ++(*argv);
 		else
-			printf("usage: %s [-d scriptdir] [-f script]\n", argv[0]);
+			printf("usage: %s [-d scriptdir] [-f script]\n", argv0);
 	}
 
 	fullpath = malloc(strlen(basedir) + strlen(script) + 1);
