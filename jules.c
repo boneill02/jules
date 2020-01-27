@@ -56,6 +56,10 @@ void do_jules(void)
 void load_script(char *path)
 {
 	FILE *f = fopen(path, "r");
+	if (!f) {
+		fprintf(stderr, "couldn't open the script.\n");
+		exit(1);
+	}
 	char pattern[256], result[256];
 	int c, i = 0, line_num = 1, line_state = 0, array_index = 0;
 	bool ignore = false, comment = false;
@@ -197,11 +201,12 @@ void parse_response(char *response)
 
 int main(int argc, char *argv[])
 {
-	char *basedir = "./";
+	char *basedir = "/usr/share/jules/";
 	char *script = "scripts/texting.jul";
 	char *fullpath;
 
 	if (argc == 2) {
+		basedir = "";
 		script = argv[1];
 	} else if (argc == 1) {
 		/* do nothing */

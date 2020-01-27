@@ -20,9 +20,12 @@ dist:
 	@echo "UNIMPLEMENTED"
 
 install: all
-	@echo "UNIMPLEMENTED"
+	cp jules $(DESTDIR)$(PREFIX)/bin/jules
+	mkdir -p $(DESTDIR)$(PREFIX)/share/jules
+	cp -r scripts $(DESTDIR)$(PREFIX)/share/jules/
 
 uninstall:
+	rm -rf $(DESTDIR)$(PREFIX)/bin/jules $(DESTDIR)$(PREFIX)/share/jules
 	@echo "UNIMPLEMENTED"
 
 .PHONY: all options clean dist install uninstall
