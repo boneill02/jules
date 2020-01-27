@@ -5,8 +5,12 @@ START:hi!
 PATTERN: # pattern section
 ^(hi|hello|sup|hey).*$:heyyy
 ^(how (are|r) (you|u)|hru).*$:ok hbu?
+^(same|me too).*$:nicee
 ^(i'm|i am)*.*(ight|ok|alright).*$:something wrong?
-^(i'm|i am)*.*(pretty|really|very)*(fine|not good|horrible|terrible|bad|sad|depressed|worried).*$:wait why?
 ^(i'm|i am)*.*(good|great|happy|amazing).*$:aw great!
+^(i'm|i am)*.*(going to|gonna).*$:okayy
+^(ye).*:yeaaa
+^(can|will) (you|u|i).*$:sure, whenever you want
+^(i'm|i am)*.*(pretty|really|very)*(fine|not good|horrible|terrible|bad|sad|depressed|worried).*$:wait why?
 DEFAULT:
 boomer moment
