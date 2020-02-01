@@ -196,6 +196,9 @@ void parse_response(char *response)
 	int regex_ret;
 	PatternRule *pattern_rule = pattern_rule_list;
 
+	if (!strcmp(response, "exit") || !strcmp(response, "quit"))
+		exit(0);
+
 	while (pattern_rule->pattern != NULL) {
 		regex_ret = regcomp(&regex, pattern_rule->pattern, REG_EXTENDED);
 		if (regex_ret) {
@@ -204,6 +207,7 @@ void parse_response(char *response)
 		}
 
 		regex_ret = regexec(&regex, response, 0, NULL, 0);
+
 		if (!regex_ret) {
 			printf("%s:\t%s\n", script_name, pattern_rule->result);
 			regfree(&regex);
