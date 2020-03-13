@@ -14,7 +14,7 @@ jules: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f ashley ${OBJ}
+	rm -f jules ${OBJ}
 
 dist:
 	@echo "UNIMPLEMENTED"
