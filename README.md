@@ -1,7 +1,4 @@
 # jules
 
-she is a fun chat bot, you can text with her like a person
-
-## TODO
-* substitution
-* random default responses
+A non-learning chat bot which consists of a backend written in like
+200 lines of C. Not in active development.
