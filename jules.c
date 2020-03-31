@@ -21,10 +21,12 @@
 #include <string.h>
 
 #define MAX_DEFAULT_RULES 256
+#define MAX_RESULTS 8
 
 typedef struct pattern_rule {
 	char *pattern;
-	char *result;
+	char results[MAX_RESULTS][64];
+	int result_count;
 	struct pattern_rule *next;
 } PatternRule;
 
@@ -72,7 +74,7 @@ void load_script(char *path)
 		exit(1);
 	}
 	char pattern[256], result[256];
-	int c, i = 0, line_num = 1, line_state = 0, array_index = 0;
+	int c, i = 0, j = 0, k = 0, line_num = 1, line_state = 0, array_index = 0;
 	bool ignore = false, comment = false;
 	enum ParseState parse_state = PARSE_META;
 
@@ -126,18 +128,25 @@ handle_newline:
 					current_pattern_rule->pattern = malloc(strlen(pattern) + 1);
 					strcpy(current_pattern_rule->pattern, pattern);
 					current_pattern_rule->pattern[strlen(pattern)] = '\0';
-
-					current_pattern_rule->result = malloc(strlen(result) + 1);
-					strcpy(current_pattern_rule->result, result);
-					current_pattern_rule->result[strlen(result)] = '\0';
-
+					j = 0, k = 0;
+					for (i = 0; i < strlen(result); i++) {
+						if (result[i] == ',' && j < MAX_RESULTS) {
+							current_pattern_rule->results[j][k] = '\0';
+							j++;
+							k = 0;
+						} else {
+							current_pattern_rule->results[j][k] = result[i];
+							k++;
+						}
+					}
+					current_pattern_rule->result_count = j + 1;
+					current_pattern_rule->results[j][k] = '\0';
 					current_pattern_rule->next = malloc(sizeof(PatternRule));
 					current_pattern_rule = current_pattern_rule->next;
 				} else if (parse_state == PARSE_PATTERN && !strcmp(pattern, "DEFAULT")) {
 					parse_state = PARSE_DEFAULT;
 					current_pattern_rule->next = NULL;
 					current_pattern_rule->pattern = NULL;
-					current_pattern_rule->result = NULL;
 				} else if (parse_state == PARSE_DEFAULT) {
 					if (num_default_rules >= MAX_DEFAULT_RULES)
 						continue; /* ignore it */
@@ -199,7 +208,7 @@ void parse_response(char *response)
 		regex_ret = regexec(&regex, response, 0, NULL, 0);
 
 		if (!regex_ret) {
-			printf("%s:\t%s\n", script_name, pattern_rule->result);
+			printf("%s:\t%s\n", script_name, pattern_rule->results[random() % pattern_rule->result_count]);
 			regfree(&regex);
 			return;
 		}
