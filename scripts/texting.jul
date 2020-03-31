@@ -5,14 +5,15 @@ START:hi!
 
 PATTERN: # pattern section
 ^(hi|hello|sup|hey).*$:heyyy
-^(hru|how (are|r) (you|u)).*$:ok hbu?
-^(same|me too).*$:nicee
-(i'm|i am|im)*.*(ight|ok|alright).*$:something wrong?
-(i'm|i am|im)*.*(good|great|happy|amazing).*$:aw great!
-(i'm|i am|im)*.*(gonna|going to).*$:aw great!
+^(hru|how (are|r) (you|u)).*$:ok hbu?,im alright!,fine.,not good
+^(same|me too).*$:nicee,cool!,coolio
+(i'm|i am|im)*.*(ight|ok|alright).*$:something wrong?,everything ok?,whats up?
+(i'm|i am|im)*.*(good|great|happy|amazing).*$:aw great!,yay!,thats good
+(i'm|i am|im)*.*(gonna|going to).*$:aw great!,yay!,thats good
 ^(ye|yea)|(yeah|yep)|(yup|yah)|ya) .*$:yeaaa
 ^(can|will) (you|u|i).*$:sure, whenever you want
 ^(i'm|i am)*.*(pretty|really)|very)*(fine|not good)|(horrible|terrible)|(bad|sad)|(depressed|worried)).*$:wait why?
 ^(wyd|what (are|r)* (you|u) up (to|2)).*$:nmu
 DEFAULT:
 what? i don't understand, sorry lol
+sorry but idk what ur talking about haha
