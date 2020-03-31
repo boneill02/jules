@@ -20,10 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct default_rule {
-	char *result;
-	struct default_rule *next;
-} DefaultRule;
+#define MAX_DEFAULT_RULES 256
 
 typedef struct pattern_rule {
 	char *pattern;
@@ -31,8 +28,8 @@ typedef struct pattern_rule {
 	struct pattern_rule *next;
 } PatternRule;
 
-DefaultRule *default_rule_list;
 PatternRule *pattern_rule_list;
+char *default_rule_list[MAX_DEFAULT_RULES];
 int num_default_rules = 0, num_pattern_rules = 0;
 
 char initial_str[256], user_name[8] = "YOU", script_name[8];
@@ -49,8 +46,6 @@ void parse_response(char *response);
 
 void do_jules(void)
 {
-	PatternRule *patrule = pattern_rule_list;
-	DefaultRule *defrule = default_rule_list;
 	int c, index = 0;
 	char response[512];
 
@@ -80,9 +75,6 @@ void load_script(char *path)
 	int c, i = 0, line_num = 1, line_state = 0, array_index = 0;
 	bool ignore = false, comment = false;
 	enum ParseState parse_state = PARSE_META;
-
-	DefaultRule *current_default_rule = malloc(sizeof(DefaultRule));
-	default_rule_list = current_default_rule;
 
 	PatternRule *current_pattern_rule = malloc(sizeof(PatternRule));
 	pattern_rule_list = current_pattern_rule;
@@ -147,13 +139,12 @@ handle_newline:
 					current_pattern_rule->pattern = NULL;
 					current_pattern_rule->result = NULL;
 				} else if (parse_state == PARSE_DEFAULT) {
+					if (num_default_rules >= MAX_DEFAULT_RULES)
+						continue; /* ignore it */
 					pattern[array_index] = '\0';
-					current_default_rule->result = malloc(strlen(pattern) + 1);
-					strcpy(current_default_rule->result, pattern);
-					current_default_rule->result[strlen(pattern)] = '\0';
-
-					current_default_rule->next = malloc(sizeof(DefaultRule));
-					current_default_rule = current_default_rule->next;
+					default_rule_list[num_default_rules] = malloc(strlen(pattern) + 1);
+					strcpy(default_rule_list[num_default_rules], pattern);
+					num_default_rules++;
 				} else if (strlen(pattern) == 0) {
 					/* do nothing */
 				} else {
@@ -186,7 +177,6 @@ handle_newline:
 		}
 	}
 
-	current_default_rule->next = NULL;
 	current_pattern_rule->next = NULL;
 }
 
@@ -218,13 +208,13 @@ void parse_response(char *response)
 		pattern_rule = pattern_rule->next;
 	}
 
-	printf("%s:\t%s\n", script_name, default_rule_list->result);
+	printf("%s:\t%s\n", script_name, default_rule_list[random() % num_default_rules]);
 }
 
 int main(int argc, char *argv[])
 {
 	char *basedir = "/usr/share/jules/";
-	char *script = "scripts/texting.jul";
+	char *script = "texting.jul";
 	char *fullpath;
 
 	if (argc == 2) {
@@ -240,6 +230,7 @@ int main(int argc, char *argv[])
 	strcpy(fullpath, basedir);
 	strcpy(fullpath + strlen(basedir), script);
 
+	srandom(time(NULL));
 	load_script(fullpath);
 	do_jules();
 	return 0;
