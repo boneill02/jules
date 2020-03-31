@@ -22,7 +22,7 @@ dist:
 install: all
 	cp jules $(DESTDIR)$(PREFIX)/bin/jules
 	mkdir -p $(DESTDIR)$(PREFIX)/share/jules
-	cp -r scripts $(DESTDIR)$(PREFIX)/share/jules/
+	cp scripts/* $(DESTDIR)$(PREFIX)/share/jules/
 
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/jules $(DESTDIR)$(PREFIX)/share/jules
