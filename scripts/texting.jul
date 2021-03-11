@@ -1,4 +1,4 @@
-#!/usr/bin/jules
+#!/usr/local/bin/jules
 # jules texting script
 NAME:JULES
 START:hi!

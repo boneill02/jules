@@ -1,5 +1,5 @@
 # paths
-PREFIX = /usr
+PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
 # flags
