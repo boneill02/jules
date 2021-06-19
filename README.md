@@ -58,3 +58,10 @@ except that each whole line is a possible response which will be chosen at rando
 	i don't understand
 	what do you mean?
 	i'm not sure what that means
+
+## License
+
+Copyright (C) 2020-2021 Ben O'Neill <ben@benoneill.xyz>. License: GNU
+GPL Version 3 <https://gnu.org/licenses/gpl.html>. This is free
+software: you are free to change and redistribute it. There is NO
+WARRANTY, to the extent permitted by law.
