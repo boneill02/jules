@@ -1,6 +1,6 @@
 # jules
 
-A non-learning chat bot which consists of a backend written in like
+A non-learning chat bot which consists of a backend written in about
 200 lines of C.
 
 ## Building
