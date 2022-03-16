@@ -17,7 +17,8 @@ clean:
 	rm -f jules ${OBJ}
 
 dist:
-	@echo "UNIMPLEMENTED"
+	tar -czf jules.tar.gz LICENSE README.md ${SRC} scripts/ Makefile config.mk
+
 
 install: all
 	cp jules $(DESTDIR)$(PREFIX)/bin/jules
@@ -26,6 +27,5 @@ install: all
 
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/jules $(DESTDIR)$(PREFIX)/share/jules
-	@echo "UNIMPLEMENTED"
 
 .PHONY: all options clean dist install uninstall
