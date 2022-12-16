@@ -19,9 +19,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
+#ifndef MAX_DEFAULT_RULES
 #define MAX_DEFAULT_RULES 256
+#endif
+
+#ifndef MAX_RESULTS
 #define MAX_RESULTS 8
+#endif
 
 typedef struct pattern_rule {
 	char *pattern;
