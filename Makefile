@@ -28,4 +28,4 @@ install: all
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/jules $(DESTDIR)$(PREFIX)/share/jules
 
-.PHONY: all options clean dist install uninstall
+.PHONY: all clean dist install uninstall
